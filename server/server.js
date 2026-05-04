@@ -8,6 +8,9 @@ const authRoutes = require("./routes/authRoutes");
 
 const holidayRoutes = require("./routes/holidayRoutes");
 const leaveRoutes = require("./routes/leaveRoutes");
+const leaveTypeRoutes = require("./routes/leaveTypeRoutes");
+
+
 const app = express();
 
 
@@ -32,6 +35,7 @@ app.use("/api", holidayRoutes);
 
 
 app.use("/api", leaveRoutes);
+app.use("/api", leaveTypeRoutes);
 
 app.listen(5000,()=>{
 

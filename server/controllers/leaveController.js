@@ -1,74 +1,59 @@
 const db = require("../db");
 
-// working days calculation
-function calculateWorkingDays(start, end, holidays) {
-  let count = 0;
-  let current = new Date(start);
-  const last = new Date(end);
-
-  const holidaySet = new Set(
-    holidays.map(h => new Date(h.holiday_date).toDateString())
-  );
-
-  while (current <= last) {
-    const day = current.getDay();
-
-    const isWeekend = day === 0 || day === 6;
-    const isHoliday = holidaySet.has(current.toDateString());
-
-    if (!isWeekend && !isHoliday) {
-      count++;
-    }
-
-    current.setDate(current.getDate() + 1);
-  }
-
-  return count;
-}
-
 exports.applyLeave = (req, res) => {
-  const { user_id, manager_id, leave_type_id, start_date, end_date, reason } = req.body;
-
-  db.query("SELECT * FROM holidays", (err, holidays) => {
+  const { user_id, manager_id, leave_type_id, start_date, end_date, working_days, reason } = req.body;
+  const sql = `
+    INSERT INTO leave_requests (user_id, manager_id, leave_type_id, start_date, end_date, working_days, reason, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
+  `;
+  db.query(sql, [user_id, manager_id, leave_type_id, start_date, end_date, working_days, reason], (err, result) => {
     if (err) return res.status(500).json(err);
-
-    const working_days = calculateWorkingDays(start_date, end_date, holidays);
-
-    const sql = `
-      INSERT INTO leave_requests
-      (user_id, manager_id, leave_type_id, start_date, end_date, working_days, reason, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'Pending')
-    `;
-
-    db.query(
-      sql,
-      [user_id, manager_id, leave_type_id, start_date, end_date, working_days, reason],
-      (err) => {
-        if (err) return res.status(500).json(err);
-
-        res.json({
-          message: "Leave applied successfully",
-          working_days
-        });
-      }
-    );
+    res.json({ message: "Leave applied successfully", id: result.insertId });
   });
 };
-exports.getMyLeaves = (req, res) => {
-  const userId = req.params.userId;
+
+exports.getPendingLeaves = (req, res) => {
+  const managerId = req.params.managerId;
 
   const sql = `
-    SELECT *
-    FROM leave_requests
-    WHERE user_id = ?
-    ORDER BY created_at DESC
+    SELECT * FROM leave_requests
+    WHERE manager_id = ? AND status = 'Pending'
   `;
 
-  db.query(sql, [userId], (err, result) => {
-    if (err) {
-      return res.status(500).json(err);
-    }
-
+  db.query(sql, [managerId], (err, result) => {
+    if (err) return res.status(500).json(err);
     res.json(result);
+  });
+};
+
+exports.approveLeave = (req, res) => {
+  const leaveId = req.params.id;
+  const { acted_by } = req.body;
+  
+  const sql = `
+    UPDATE leave_requests 
+    SET status = 'Approved', acted_by = ?, acted_at = NOW()
+    WHERE id = ?
+  `;
+
+  db.query(sql, [acted_by, leaveId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json({ message: "Leave approved successfully" });
+  });
+};
+
+exports.rejectLeave = (req, res) => {
+  const leaveId = req.params.id;
+  const { comment, acted_by } = req.body;
+
+  const sql = `
+    UPDATE leave_requests 
+    SET status = 'Rejected', manager_comment = ?, acted_by = ?, acted_at = NOW()
+    WHERE id = ?
+  `;
+
+  db.query(sql, [comment, acted_by, leaveId], (err, result) => {
+    if (err) return res.status(500).json(err);
+    res.json({ message: "Leave rejected successfully" });
   });
 };

@@ -1,0 +1,65 @@
+.dashboard-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* Card design */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+/* No data text */
+.no-data {
+  text-align: center;
+  color: gray;
+}
+
+/* Status styles */
+.status {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: white;
+}
+
+.status.pending {
+  background-color: orange;
+}
+
+.status.approved {
+  background-color: green;
+}
+
+.status.rejected {
+  background-color: red;
+}
+
+/* Date style */
+.date {
+  font-size: 12px;
+  color: #777;
+  margin-top: 8px;
+}
